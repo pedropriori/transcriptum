@@ -59,11 +59,12 @@ def _map_transcript(
         for u in (transcript.utterances or [])
     ]
 
+    raw = transcript.json_response or {}
     return TranscriptionResult(
         audio_file=audio_file,
         status=TranscriptionStatus.COMPLETED,
         text=transcript.text or "",
-        language=transcript.language_code or "",
+        language=raw.get("language_code") or "",
         confidence=transcript.confidence or 0.0,
         duration_seconds=int(transcript.audio_duration or 0),
         words=words,
