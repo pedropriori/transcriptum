@@ -1,0 +1,11 @@
+input_dir: "./lincohn-vo"
+output_dir: "./outputs"
+language: "pt"
+formats:
+  - md
+  - txt
+
+extras:
+  timestamps: false
+  speaker_diarization: false
+  confidence_scores: false
