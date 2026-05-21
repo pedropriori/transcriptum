@@ -1,9 +1,9 @@
-input_dir: "./lincohn-vo"
+input_dir: "./input/lincohn-vo"
 output_dir: "./outputs"
 language: "pt"
 formats:
   - md
-  - txt
+  - docx
 
 extras:
   timestamps: false
