@@ -38,7 +38,7 @@ def test_txt_full_contains_index(two_results):
 def test_export_writes_individual_and_full_files(tmp_path, two_results):
     exporter = TxtExporter()
     written = exporter.export(two_results, tmp_path)
-    individual_files = [p for p in written if "individual" in str(p)]
+    individual_files = [p for p in written if p.parent.name == "individual"]
     full_files = [p for p in written if "FULL" in p.name]
     assert len(individual_files) == 2
     assert len(full_files) == 1
