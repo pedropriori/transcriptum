@@ -3,12 +3,14 @@ from .txt import TxtExporter
 from .markdown import MarkdownExporter
 from .json import JsonExporter
 from .docx import DocxExporter
+from .pdf import PdfExporter
 
 EXPORTERS: dict[str, type[Exporter]] = {
     "txt": TxtExporter,
     "md": MarkdownExporter,
     "json": JsonExporter,
     "docx": DocxExporter,
+    "pdf": PdfExporter,
 }
 
 
