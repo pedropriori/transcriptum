@@ -9,7 +9,7 @@ class MarkdownExporter(Exporter):
 
     def render_individual(self, result: TranscriptionResult) -> str:
         body = (
-            result.text
+            "\n\n".join(self._body_lines(result))
             if result.status == TranscriptionStatus.COMPLETED
             else f"**[FALHOU: {result.error}]**"
         )
@@ -46,7 +46,7 @@ class MarkdownExporter(Exporter):
 
         for r in results:
             body = (
-                r.text
+                "\n\n".join(self._body_lines(r))
                 if r.status == TranscriptionStatus.COMPLETED
                 else f"**[FALHOU: {r.error}]**"
             )

@@ -31,7 +31,7 @@ class PdfExporter(Exporter):
 
         pdf.set_font("Helvetica", "", 11)
         body = (
-            result.text
+            "\n\n".join(self._body_lines(result))
             if result.status == TranscriptionStatus.COMPLETED
             else f"[FALHOU: {result.error}]"
         )
@@ -75,7 +75,7 @@ class PdfExporter(Exporter):
 
             pdf.set_font("Helvetica", "", 11)
             body = (
-                r.text
+                "\n\n".join(self._body_lines(r))
                 if r.status == TranscriptionStatus.COMPLETED
                 else f"[FALHOU: {r.error}]"
             )

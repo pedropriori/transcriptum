@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -26,6 +27,15 @@ from src.exporters import get_exporters
 from src.exporters.json import result_to_dict
 from src.models import TranscriptionStatus
 from src.transcriber import collect_audio_files, transcribe_batch
+
+# Windows can attach stdout/stderr with a legacy codepage (e.g. cp1252) instead
+# of UTF-8 depending on the terminal -- confirmed to crash rich's console.rule()
+# (box-drawing characters) and this file's own "—"/accented-character output
+# when that happens. Force UTF-8 unconditionally on Windows rather than
+# depending on the console's own auto-detection.
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 # ── App setup ────────────────────────────────────────────────────────────────
 
@@ -80,12 +90,12 @@ def _config_panel(config: AppConfig, n_files: int | None = None) -> None:
 
     dir_str = str(config.input_dir)
     if n_files is not None:
-        dir_str += f"  [dim]({n_files} arquivos .ogg)[/dim]"
+        dir_str += f"  [dim]({n_files} arquivo{'s' if n_files != 1 else ''})[/dim]"
 
     t = Table(show_header=False, box=None, padding=(0, 2))
     t.add_column(style="dim", no_wrap=True)
     t.add_column()
-    t.add_row("Pasta",    dir_str)
+    t.add_row("Entrada",  dir_str)
     t.add_row("Idioma",   f"[bold]{config.language}[/bold]  [dim]— {SUPPORTED_LANGUAGES.get(config.language, '')}[/dim]")
     t.add_row("Formatos", "[bold]" + ", ".join(config.formats) + "[/bold]")
     t.add_row("Extras",   extras_str)
@@ -257,14 +267,14 @@ def _transcribe_with_progress(audio_files, config) -> list:
 
 @app.command()
 def run(
-    input:      Optional[str] = typer.Option(None,  "--input",  "-i", help="Pasta de entrada"),
+    input:      Optional[str] = typer.Option(None,  "--input",  "-i", help="Pasta de entrada (lote de .ogg) ou caminho de um único arquivo de áudio/vídeo (ex: gravação de call)"),
     formats:    Optional[str] = typer.Option(None,  "--formats","-f", help="Formatos: md,txt,json,docx,pdf"),
     timestamps: bool          = typer.Option(False, "--timestamps",   help="Timestamps por palavra"),
     speakers:   bool          = typer.Option(False, "--speakers",     help="Diarização por speaker"),
     confidence: bool          = typer.Option(False, "--confidence",   help="Confiança por palavra"),
     yes:        bool          = typer.Option(False, "--yes", "-y",    help="Pular menu interativo"),
 ) -> None:
-    """Transcreve todos os .ogg da pasta de entrada."""
+    """Transcreve todos os .ogg de uma pasta, ou um único arquivo de áudio/vídeo (ex: gravação de reunião)."""
 
     # CLI flag overrides
     flag_overrides: dict = {}
@@ -295,6 +305,13 @@ def run(
         console.print("[red]Erro:[/red] ASSEMBLYAI_API_KEY não configurada. Adicione ao arquivo .env.")
         raise typer.Exit(1)
 
+    if config.language == "auto":
+        console.print(
+            "[yellow]Atenção:[/yellow] idioma \"auto\" (detecção automática) já confundiu português "
+            "com romeno em testes anteriores, gerando transcrição ilegível. Prefira fixar \"pt\" "
+            "explicitamente pra áudio em português."
+        )
+
     # ── Interactive TUI (default when no flags) ───────────────────────────────
     if not flag_overrides and not yes:
         try:
@@ -317,7 +334,8 @@ def run(
     # ── Run header ────────────────────────────────────────────────────────────
     _clear()
     console.rule("[bold cyan]Transcriptum[/bold cyan]")
-    console.print(f"  Pasta:    {config.input_dir}  ({len(audio_files)} arquivos .ogg)")
+    n = len(audio_files)
+    console.print(f"  Entrada:  {config.input_dir}  ({n} arquivo{'s' if n != 1 else ''})")
     console.print(f"  Idioma:   {config.language}  — {SUPPORTED_LANGUAGES.get(config.language, '')}")
     console.print(f"  Formatos: {', '.join(config.formats)}")
     console.rule()

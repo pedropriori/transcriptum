@@ -1,6 +1,6 @@
 # Transcriptum
 
-Ferramenta CLI para transcrição em batch de áudios WhatsApp (.OGG) via [AssemblyAI](https://www.assemblyai.com/). Gera outputs individuais e consolidados em múltiplos formatos, com menu interativo e barra de progresso em tempo real.
+Ferramenta CLI para transcrição via [AssemblyAI](https://www.assemblyai.com/): em batch de áudios WhatsApp (.OGG), ou de um único arquivo de áudio/vídeo (ex: gravação de call/reunião) com diarização por speaker. Gera outputs individuais e consolidados em múltiplos formatos, com menu interativo e barra de progresso em tempo real.
 
 ---
 
@@ -8,7 +8,9 @@ Ferramenta CLI para transcrição em batch de áudios WhatsApp (.OGG) via [Assem
 
 - **Menu TUI interativo** — navegação com setas, seleção de formatos, idioma e extras sem precisar decorar flags
 - **Barra de progresso em tempo real** — cada arquivo aparece ao ser concluído, com duração e confiança
+- **Lote ou arquivo único** — uma pasta de `.ogg` do WhatsApp, ou um único arquivo de áudio/vídeo (mp4, mkv, mov, wav...) como uma gravação de call/reunião — áudio de vídeo é extraído automaticamente via ffmpeg antes do envio
 - **5 formatos de saída** — Markdown, TXT, JSON, DOCX e PDF gerados simultaneamente
+- **Diarização por speaker de primeira classe** — com o extra ativado, todo formato de saída (não só o JSON) mostra `[mm:ss] Speaker A: texto` por fala, não só um bloco de texto corrido
 - **Runs isolados** — cada execução cria uma pasta com timestamp, nunca sobrescreve resultados anteriores
 - **`transcriptions.json` sempre gerado** — arquivo pivô com todos os dados estruturados para uso programático
 - **12 idiomas + auto-detecção** — português, inglês, espanhol, francês, alemão e mais
@@ -52,6 +54,7 @@ Transcrevendo ━━━━━━━━━━━━━━━━━━━━━━
 
 - Python 3.11+
 - Conta no [AssemblyAI](https://www.assemblyai.com/) (plano gratuito disponível)
+- `ffmpeg` no PATH — apenas para transcrever um arquivo de vídeo único (extração de áudio); não é necessário para o lote de `.ogg`
 
 ---
 
@@ -96,20 +99,22 @@ Obtenha sua chave gratuita em [assemblyai.com](https://www.assemblyai.com/app).
 O arquivo `config.yaml` define os padrões de cada execução:
 
 ```yaml
-input_dir: "./input/audio-fies"   # pasta com os arquivos .ogg
+input_dir: "./input/audio-fies"   # pasta com os arquivos .ogg, OU caminho de um único arquivo de áudio/vídeo
 output_dir: "./outputs"           # onde os resultados são salvos
-language: "pt"                    # idioma padrão (pt, en, es, fr, de, auto...)
+language: "pt"                    # idioma padrão (pt, en, es, fr, de, auto...) -- evite "auto" pra português, ver nota abaixo
 formats:
   - md                            # formatos gerados por padrão
   - txt
 
 extras:
   timestamps: false               # timestamps por palavra
-  speaker_diarization: false      # quem falou cada trecho
+  speaker_diarization: false      # quem falou cada trecho -- aparece formatado em todo formato de saída, não só no JSON
   confidence_scores: false        # confiança por palavra
 ```
 
 Todos os valores podem ser sobrescritos via menu interativo ou flags CLI.
+
+> **Nota sobre `language: "auto"`:** a detecção automática da AssemblyAI já confundiu português com romeno em teste real, produzindo uma transcrição ilegível. Pra áudio em português, fixe `"pt"` explicitamente em vez de usar `"auto"`.
 
 ---
 
@@ -137,6 +142,23 @@ python transcribe.py run --input ./outro-batch --yes
 
 # Ativar extras
 python transcribe.py run --timestamps --speakers --confidence --yes
+```
+
+### Transcrever uma única gravação (call/reunião) com diarização
+
+Além do lote de `.ogg` do WhatsApp, `--input` também aceita o caminho de um único arquivo — áudio (`.wav`,
+`.mp3`, `.ogg`...) ou vídeo (`.mp4`, `.mkv`, `.mov`, `.webm`, `.avi`). Vídeo tem o áudio extraído
+automaticamente via `ffmpeg` (precisa estar no PATH) antes do envio pra AssemblyAI.
+
+```bash
+python transcribe.py run --input "./gravacoes/call-2026-09-03.mkv" --speakers --formats md --yes
+```
+
+O `FULL.md`/individual gerado mostra cada fala já identificada por speaker e timestamp:
+
+```
+[00:34] Speaker A: Fala, tudo bem?
+[00:52] Speaker B: Tudo, e você?
 ```
 
 ### Outros comandos
@@ -237,7 +259,7 @@ Formato estruturado com todos os dados. Ideal para integração com outros siste
 | `ja`   | 日本語    |
 | `ko`   | 한국어    |
 | `zh`   | 中文      |
-| `auto` | Auto-detect |
+| `auto` | Auto-detect (⚠ evite para português — ver nota na seção Configuração) |
 
 ---
 
@@ -248,7 +270,7 @@ Ativados via menu interativo ou flags:
 | Extra | Flag | Descrição |
 |-------|------|-----------|
 | Timestamps | `--timestamps` | Start/end em ms de cada palavra em `words[]` |
-| Diarização | `--speakers`   | Identifica quem falou cada trecho em `utterances[]` |
+| Diarização | `--speakers`   | Identifica quem falou cada trecho em `utterances[]`, e já formata `[mm:ss] Speaker X: texto` em todo formato de saída (md/txt/docx/pdf), além do `utterances[]` estruturado no JSON |
 | Confiança  | `--confidence` | Score de confiança por palavra em `words[]` |
 
 ---
@@ -261,6 +283,7 @@ Ativados via menu interativo ou flags:
 | Pasta de entrada vazia | Mensagem descritiva, exit limpo |
 | Arquivo individual falha | `status: "failed"` no JSON, batch continua |
 | Formato inválido no config | Erro de validação com sugestão |
+| `ffmpeg` ausente (entrada de vídeo único) | `RuntimeError` descritivo antes de qualquer chamada à AssemblyAI |
 
 ---
 
@@ -272,7 +295,7 @@ Ativados via menu interativo ou flags:
 python -m pytest -v
 ```
 
-50 testes unitários cobrindo modelos, config, todos os exporters e transcriber (com mock do SDK AssemblyAI).
+60 testes unitários cobrindo modelos, config, todos os exporters e transcriber (com mock do SDK AssemblyAI).
 
 ### Estrutura do projeto
 
@@ -320,7 +343,7 @@ Nenhum outro arquivo precisa ser alterado.
 
 | Pacote | Versão | Uso |
 |--------|--------|-----|
-| `assemblyai` | ≥0.28.0 | SDK oficial — upload, batch, polling |
+| `assemblyai` | ≥1.0.0 | SDK oficial — upload, batch, polling (versões abaixo de 1.0 não suportam `speech_models`/`universal-3-5-pro`) |
 | `typer[all]` | ≥0.12.0 | CLI + Rich incluído |
 | `questionary` | ≥2.0.0 | Menu TUI interativo |
 | `pydantic` | ≥2.7.0 | Validação do config.yaml |

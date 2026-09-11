@@ -63,3 +63,12 @@ class TranscriptionResult:
     @property
     def confidence_pct(self) -> str:
         return f"{int(self.confidence * 100)}%"
+
+    @property
+    def diarized_lines(self) -> list[str]:
+        """Speaker-labeled lines like '[00:34] Speaker A: texto', or [] when there's no diarization data (speaker_diarization was off, or the audio has a single speaker)."""
+        lines = []
+        for u in self.utterances:
+            mm, ss = divmod(u.start // 1000, 60)
+            lines.append(f"[{mm:02d}:{ss:02d}] Speaker {u.speaker}: {u.text}")
+        return lines

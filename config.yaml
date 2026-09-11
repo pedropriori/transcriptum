@@ -1,6 +1,6 @@
-input_dir: "./input/lincohn-vo"
+input_dir: "./input/lincohn-vo"   # pasta com .ogg em lote, OU caminho de um único arquivo de áudio/vídeo
 output_dir: "./outputs"
-language: "pt"
+language: "pt"                    # evite "auto" para português -- já confundiu com romeno em testes
 formats:
   - md
   - docx

@@ -41,6 +41,15 @@ def test_docx_full_contains_all_texts(two_results):
     assert "Segundo áudio." in full_text
 
 
+def test_docx_individual_renders_speaker_labels(diarized_result):
+    exporter = DocxExporter()
+    output = exporter.render_individual(diarized_result)
+    doc = Document(BytesIO(output))
+    full_text = "\n".join(p.text for p in doc.paragraphs)
+    assert "[00:00] Speaker A: Fala, tudo bem?" in full_text
+    assert "[00:02] Speaker B: Tudo, e você?" in full_text
+
+
 def test_export_writes_docx_files(tmp_path, two_results):
     exporter = DocxExporter()
     written = exporter.export(two_results, tmp_path)

@@ -15,6 +15,13 @@ def test_pdf_full_returns_bytes(two_results):
     assert output[:4] == b"%PDF"
 
 
+def test_pdf_individual_with_speaker_labels_returns_bytes(diarized_result):
+    exporter = PdfExporter()
+    output = exporter.render_individual(diarized_result)
+    assert isinstance(output, bytes)
+    assert output[:4] == b"%PDF"
+
+
 def test_export_writes_pdf_files(tmp_path, two_results):
     exporter = PdfExporter()
     written = exporter.export(two_results, tmp_path)

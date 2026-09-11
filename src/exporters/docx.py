@@ -21,12 +21,11 @@ class DocxExporter(Exporter):
         run.italic = True
 
         doc.add_paragraph()
-        body = (
-            result.text
-            if result.status == TranscriptionStatus.COMPLETED
-            else f"[FALHOU: {result.error}]"
-        )
-        doc.add_paragraph(body)
+        if result.status == TranscriptionStatus.COMPLETED:
+            for line in self._body_lines(result):
+                doc.add_paragraph(line)
+        else:
+            doc.add_paragraph(f"[FALHOU: {result.error}]")
 
         buf = BytesIO()
         doc.save(buf)
@@ -56,12 +55,11 @@ class DocxExporter(Exporter):
             dur_p = doc.add_paragraph()
             dur_p.add_run(f"Duração: {r.duration_str}").italic = True
 
-            body = (
-                r.text
-                if r.status == TranscriptionStatus.COMPLETED
-                else f"[FALHOU: {r.error}]"
-            )
-            doc.add_paragraph(body)
+            if r.status == TranscriptionStatus.COMPLETED:
+                for line in self._body_lines(r):
+                    doc.add_paragraph(line)
+            else:
+                doc.add_paragraph(f"[FALHOU: {r.error}]")
             doc.add_paragraph("─" * 30)
 
         buf = BytesIO()

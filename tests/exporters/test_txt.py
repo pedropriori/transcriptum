@@ -35,6 +35,13 @@ def test_txt_full_contains_index(two_results):
     assert "02." in output or "02 " in output
 
 
+def test_txt_individual_renders_speaker_labels(diarized_result):
+    exporter = TxtExporter()
+    output = exporter.render_individual(diarized_result)
+    assert "[00:00] Speaker A: Fala, tudo bem?" in output
+    assert "[00:02] Speaker B: Tudo, e você?" in output
+
+
 def test_export_writes_individual_and_full_files(tmp_path, two_results):
     exporter = TxtExporter()
     written = exporter.export(two_results, tmp_path)

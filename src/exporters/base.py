@@ -40,3 +40,7 @@ class Exporter(ABC):
             path.write_bytes(content)
         else:
             path.write_text(content, encoding="utf-8")
+
+    def _body_lines(self, result: TranscriptionResult) -> list[str]:
+        """Body paragraphs for a completed result: one line per speaker turn when diarization data is available, otherwise the flat transcript as a single paragraph."""
+        return result.diarized_lines or [result.text]

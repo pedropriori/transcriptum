@@ -56,3 +56,25 @@ def test_transcription_result_defaults(tmp_path):
     assert result.words == []
     assert result.utterances == []
     assert result.error is None
+
+
+def test_diarized_lines_empty_without_utterances(tmp_path):
+    af = make_audio_file(tmp_path)
+    result = TranscriptionResult(audio_file=af, status=TranscriptionStatus.COMPLETED, text="oi")
+    assert result.diarized_lines == []
+
+
+def test_diarized_lines_formats_speaker_and_timestamp(tmp_path):
+    af = make_audio_file(tmp_path)
+    result = TranscriptionResult(
+        audio_file=af,
+        status=TranscriptionStatus.COMPLETED,
+        utterances=[
+            Utterance(speaker="A", text="Fala, tudo bem?", start=34000, end=36000),
+            Utterance(speaker="B", text="Tudo, e você?", start=52000, end=54000),
+        ],
+    )
+    assert result.diarized_lines == [
+        "[00:34] Speaker A: Fala, tudo bem?",
+        "[00:52] Speaker B: Tudo, e você?",
+    ]

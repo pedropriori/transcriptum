@@ -47,6 +47,13 @@ def test_md_full_contains_all_texts(two_results):
     assert "Segundo áudio." in output
 
 
+def test_md_individual_renders_speaker_labels(diarized_result):
+    exporter = MarkdownExporter()
+    output = exporter.render_individual(diarized_result)
+    assert "[00:00] Speaker A: Fala, tudo bem?" in output
+    assert "[00:02] Speaker B: Tudo, e você?" in output
+
+
 def test_export_writes_md_files(tmp_path, two_results):
     exporter = MarkdownExporter()
     written = exporter.export(two_results, tmp_path)
